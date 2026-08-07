@@ -17,6 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=MedievalSharp&display=swap" rel="stylesheet">
 
   <style>
+    [x-cloak] { display: none !important; }
     body { background-color: #0f0d0a; color: #e2d2b4; font-family: 'MedievalSharp', cursive, serif; }
     .font-title { font-family: 'Cinzel Decorative', serif; }
     .gold-border { border: 1px solid #b8860b; box-shadow: 0 0 10px rgba(184, 134, 11, 0.15); }
@@ -24,212 +25,299 @@
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #0f0d0a; }
     ::-webkit-scrollbar-thumb { background: #3a2e1e; border-radius: 3px; }
-    [x-cloak] { display: none !important; }
   </style>
 </head>
-<body class="p-3 md:p-5 min-h-screen flex flex-col justify-between relative" x-data="assinaturasApp()">
+<body class="p-3 md:p-5 min-h-screen flex flex-col justify-between relative" x-data="assinaturasApp()" x-cloak>
 
-  <div class="max-w-4xl mx-auto w-full space-y-5">
-    
-    <!-- HEADER -->
-    <header class="flex justify-between items-center border-b border-[#3a2e1e] pb-3">
-      <div>
-        <h1 class="font-title text-xl md:text-2xl text-[#d4af37] tracking-wider drop-shadow-md">
-          📜 Os Tributos Permanentes
-        </h1>
-        <p class="text-[11px] md:text-xs text-[#a39274]">
-          Widget 07 • Controle de Assinaturas, Servidores & Recorrências
-        </p>
-      </div>
+<div class="max-w-4xl mx-auto w-full space-y-5">
 
-      <button @click="carregarDados()" 
-        class="bg-[#1c1712] hover:bg-[#2e2316] text-[#d4af37] text-xs font-semibold py-1.5 px-3 rounded border border-[#b8860b]/40 flex items-center gap-1.5 transition cursor-pointer active:scale-95">
-        <span :class="carregando ? 'animate-spin' : ''">⚡</span>
-        <span x-text="carregando ? 'Sincronizando...' : 'Sincronizar'"></span>
-      </button>
-    </header>
-
-    <!-- METRICAS -->
-    <section class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-      <div class="bg-[#181410] p-3 rounded-lg gold-border">
-        <span class="text-[10px] text-[#a39274]">📋 Assinaturas Ativas</span>
-        <div class="text-xl font-bold text-[#d4af37]" x-text="assinaturas.length + ' tributos'"></div>
-      </div>
-
-      <div class="bg-[#181410] p-3 rounded-lg gold-border">
-        <span class="text-[10px] text-[#a39274]">💸 Custo Fixo Mensal</span>
-        <div class="text-xl font-bold text-[#e5a93c]" x-text="formatarMoeda(calcularTotalMensal())"></div>
-      </div>
-
-      <div class="bg-[#181410] p-3 rounded-lg gold-border">
-        <span class="text-[10px] text-[#a39274]">📅 Custo Anual Projetado</span>
-        <div class="text-xl font-bold text-[#8fb388]" x-text="formatarMoeda(calcularTotalMensal() * 12)"></div>
-      </div>
-    </section>
-
-    <!-- FORMULÁRIO -->
-    <section class="bg-[#181410] p-4 rounded-lg gold-border space-y-3">
-      <h2 class="text-sm text-[#d4af37] font-semibold flex items-center justify-between">
-        <span class="flex items-center gap-2">
-          <span>✍️</span> 
-          <span x-text="editandoId ? 'Editar Tributo' : 'Cadastrar Novo Tributo / Assinatura'"></span>
-        </span>
-        <button x-show="editandoId" @click="cancelarEdicao()" class="text-xs text-[#8b0000] hover:underline">Cancelar Edição</button>
-      </h2>
-
-      <form @submit.prevent="salvarAssinatura()" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-        <!-- Nome -->
-        <div>
-          <label class="block text-[11px] text-[#a39274] mb-1">Serviço / Assinatura</label>
-          <input type="text" x-model="nome" placeholder="Ex: Adobe Creative Cloud..." required class="w-full bg-[#0f0d0a] border border-[#3a2e1e] text-[#e2d2b4] text-xs rounded p-2.5 outline-none elvish-glow">
-        </div>
-
-        <!-- Valor Mensal -->
-        <div>
-          <label class="block text-[11px] text-[#a39274] mb-1">Valor Mensal (R$)</label>
-          <input type="number" step="0.01" x-model="valor" placeholder="Ex: 124.00" required class="w-full bg-[#0f0d0a] border border-[#3a2e1e] text-[#e2d2b4] text-xs rounded p-2.5 outline-none elvish-glow">
-        </div>
-
-        <!-- Dia do Cobrança -->
-        <div>
-          <label class="block text-[11px] text-[#a39274] mb-1">Dia da Cobrança</label>
-          <input type="number" min="1" max="31" x-model="diaCobranca" placeholder="Ex: 15" required class="w-full bg-[#0f0d0a] border border-[#3a2e1e] text-[#e2d2b4] text-xs rounded p-2.5 outline-none elvish-glow">
-        </div>
-
-        <!-- Forma de Pagamento -->
-        <div>
-          <label class="block text-[11px] text-[#a39274] mb-1">Pagamento</label>
-          <select x-model="pagamento" class="w-full bg-[#0f0d0a] border border-[#3a2e1e] text-[#e2d2b4] text-xs rounded p-2.5 outline-none elvish-glow">
-            <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
-            <option value="Débito Automático">🏦 Débito Automático</option>
-            <option value="PIX / Boleto">⚡ PIX / Boleto</option>
-          </select>
-        </div>
-
-        <!-- Botão Ação -->
-        <div class="sm:col-span-4 flex items-end">
-          <button type="submit" class="w-full bg-[#b8860b] hover:bg-[#d4af37] text-[#0f0d0a] font-bold py-2.5 px-4 text-xs rounded transition active:scale-95">
-            <span x-text="editandoId ? 'Atualizar Tributo' : '📜 Decretar Novo Tributo'"></span>
-          </button>
-        </div>
-      </form>
-    </section>
-
-    <!-- LISTA -->
-    <section class="bg-[#14100c] p-4 rounded-lg border border-[#2e2316] space-y-3">
-      <h2 class="text-sm text-[#d4af37] font-semibold flex items-center justify-between border-b border-[#2e2316] pb-2">
-        <span>📜 Tributos Recorrentes Ativos</span>
-        <span class="text-[10px] bg-[#2e2316] text-[#a39274] px-2 py-0.5 rounded-full" x-text="assinaturas.length"></span>
-      </h2>
-
-      <div class="space-y-2 text-xs max-h-96 overflow-y-auto pr-1">
-        <template x-for="item in assinaturas" :key="item.id">
-          <div class="bg-[#1c1712] p-3 rounded border border-[#2e2316] flex flex-col md:flex-row md:items-center justify-between gap-2 hover:border-[#b8860b]/40 transition">
-            <div class="space-y-1">
-              <div class="flex items-center gap-2">
-                <span class="font-bold text-sm text-[#e2d2b4]" x-text="item.nome"></span>
-                <span class="text-[9px] bg-amber-900/40 text-amber-300 border border-amber-700/50 px-1.5 py-0.5 rounded font-bold" x-text="'Dia ' + item.diaCobranca"></span>
-              </div>
-              <div class="text-[11px] text-[#a39274]">
-                <span>💳 <strong class="text-[#e2d2b4]" x-text="item.pagamento"></strong></span>
-              </div>
-            </div>
-
-            <div class="flex items-center justify-between md:justify-end gap-3 border-t md:border-t-0 border-[#2e2316] pt-2 md:pt-0">
-              <div class="text-right">
-                <div class="font-bold text-sm text-[#d4af37]" x-text="formatarMoeda(item.valor) + ' /mês'"></div>
-              </div>
-              <div class="flex items-center gap-1">
-                <button @click="prepararEdicao(item)" class="text-[#d4af37] font-bold p-1">✎</button>
-                <button @click="excluirAssinatura(item.id)" class="text-[#8b0000] font-bold p-1">✕</button>
-              </div>
-            </div>
-          </div>
-        </template>
-
-        <template x-if="assinaturas.length === 0">
-          <p class="text-xs text-[#6e5d4f] italic py-4 text-center">Nenhum tributo permanente cadastrado.</p>
-        </template>
-      </div>
-    </section>
-
+<!-- HEADER -->
+<header class="flex justify-between items-center border-b border-[#3a2e1e] pb-3">
+  <div>
+    <h1 class="font-title text-xl md:text-2xl text-[#d4af37] tracking-wider drop-shadow-md">
+      📜 Os Tributos Permanentes
+    </h1>
+    <p class="text-[11px] md:text-xs text-[#a39274]">
+      Widget 07 • Controle de Assinaturas, Servidores & Recorrências
+    </p>
   </div>
 
-  <footer class="mt-6 text-center text-[9px] text-[#6e5d4f] border-t border-[#2e2316] pt-2">
-    <span>Os Tributos Permanentes • Erebor OS</span>
-  </footer>
+  <button @click="carregarDados()"
+    class="bg-[#1c1712] hover:bg-[#2e2316] text-[#d4af37] text-xs font-semibold py-1.5 px-3 rounded border border-[#b8860b]/40 flex items-center gap-1.5 transition cursor-pointer active:scale-95">
+    <span :class="carregando ? 'animate-spin' : ''">⚡</span>
+    <span x-text="carregando ? 'Sincronizando...' : 'Sincronizar'"></span>
+  </button>
+</header>
 
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDU3mYKoWh8qE3wj6R5OKqhWwXMeefEl2g",
-      authDomain: "erebor-os.firebaseapp.com",
-      projectId: "erebor-os",
-      storageBucket: "erebor-os.firebasestorage.app",
-      messagingSenderId: "733641275906",
-      appId: "1:733641275906:web:d83dedfee8bc056a7e851b"
-    };
+<!-- METRICAS -->
+<section class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+  <div class="bg-[#181410] p-3 rounded-lg gold-border">
+    <span class="text-[10px] text-[#a39274]">📋 Assinaturas Ativas</span>
+    <div class="text-xl font-bold text-[#d4af37]" x-text="assinaturas.length + ' tributos'"></div>
+  </div>
 
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+  <div class="bg-[#181410] p-3 rounded-lg gold-border">
+    <span class="text-[10px] text-[#a39274]">💸 Custo Fixo Mensal</span>
+    <div class="text-xl font-bold text-[#e5a93c]" x-text="formatarMoeda(calcularTotalMensal())"></div>
+  </div>
 
-    document.addEventListener('alpine:init', () => {
-      Alpine.data('assinaturasApp', () => ({
-        assinaturas: [],
-        nome: '',
-        valor: '',
-        diaCobranca: '',
-        pagamento: 'Cartão de Crédito',
-        editandoId: null,
-        carregando: false,
+  <div class="bg-[#181410] p-3 rounded-lg gold-border">
+    <span class="text-[10px] text-[#a39274]">📅 Custo Anual Projetado</span>
+    <div class="text-xl font-bold text-[#8fb388]" x-text="formatarMoeda(calcularTotalMensal() * 12)"></div>
+  </div>
+</section>
 
-        init() { this.escutarAssinaturas(); },
+<!-- FORMULÁRIO -->
+<section class="bg-[#181410] p-4 rounded-lg gold-border space-y-3">
+  <h2 class="text-sm text-[#d4af37] font-semibold flex items-center justify-between">
+    <span class="flex items-center gap-2">
+      <span>✍️</span>
+      <span x-text="editandoId ? 'Editar Tributo' : 'Cadastrar Novo Tributo / Assinatura'"></span>
+    </span>
+    <button x-show="editandoId" @click="cancelarEdicao()" class="text-xs text-[#8b0000] hover:underline">Cancelar Edição</button>
+  </h2>
 
-        escutarAssinaturas() {
-          db.collection("assinaturas").onSnapshot((snapshot) => {
-            const list = [];
-            snapshot.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
-            this.assinaturas = list;
-          });
-        },
+  <div x-show="mensagemErro" x-transition class="text-xs text-red-400 text-center font-bold pt-1 mb-2">
+    ⚠️ <span x-text="mensagemErro"></span>
+  </div>
 
-        async salvarAssinatura() {
-          if (!this.nome.trim() || !this.valor) return;
+  <form @submit.prevent="salvarAssinatura()" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+    <!-- Nome -->
+    <div>
+      <label class="block text-[11px] text-[#a39274] mb-1">Serviço / Assinatura</label>
+      <input type="text" x-model="nome" placeholder="Ex: Adobe Creative Cloud..." required class="w-full bg-[#0f0d0a] border border-[#3a2e1e] text-[#e2d2b4] text-xs rounded p-2.5 outline-none elvish-glow">
+    </div>
 
-          const dados = {
-            nome: this.nome.trim(),
-            valor: parseFloat(this.valor) || 0,
-            diaCobranca: parseInt(this.diaCobranca) || 1,
-            pagamento: this.pagamento,
-            atualizadoEm: new Date().toISOString()
-          };
+    <!-- Valor Mensal -->
+    <div>
+      <label class="block text-[11px] text-[#a39274] mb-1">Valor Mensal (R$)</label>
+      <input type="number" step="0.01" x-model="valor" placeholder="Ex: 124.00" required class="w-full bg-[#0f0d0a] border border-[#3a2e1e] text-[#e2d2b4] text-xs rounded p-2.5 outline-none elvish-glow">
+    </div>
 
-          try {
-            if (this.editandoId) {
-              await db.collection("assinaturas").doc(this.editandoId).update(dados);
-              this.cancelarEdicao();
-            } else {
-              await db.collection("assinaturas").add(dados);
-              this.limparFormulario();
-            }
-          } catch(e) { console.error("Erro ao salvar assinatura:", e); }
-        },
+    <!-- Dia de Cobrança -->
+    <div>
+      <label class="block text-[11px] text-[#a39274] mb-1">Dia da Cobrança</label>
+      <input type="number" min="1" max="31" x-model="diaCobranca" placeholder="Ex: 15" required class="w-full bg-[#0f0d0a] border border-[#3a2e1e] text-[#e2d2b4] text-xs rounded p-2.5 outline-none elvish-glow">
+    </div>
 
-        prepararEdicao(item) {
-          this.editandoId = item.id;
-          this.nome = item.nome;
-          this.valor = item.valor;
-          this.diaCobranca = item.diaCobranca;
-          this.pagamento = item.pagamento;
-        },
+    <!-- Forma de Pagamento -->
+    <div>
+      <label class="block text-[11px] text-[#a39274] mb-1">Pagamento</label>
+      <select x-model="pagamento" class="w-full bg-[#0f0d0a] border border-[#3a2e1e] text-[#e2d2b4] text-xs rounded p-2.5 outline-none elvish-glow">
+        <option value="Cartão de Crédito">💳 Cartão de Crédito</option>
+        <option value="Débito Automático">🏦 Débito Automático</option>
+        <option value="PIX / Boleto">⚡ PIX / Boleto</option>
+      </select>
+    </div>
 
-        cancelarEdicao() { this.editandoId = null; this.limparFormulario(); },
-        limparFormulario() { this.nome = ''; this.valor = ''; this.diaCobranca = ''; this.pagamento = 'Cartão de Crédito'; },
-        async excluirAssinatura(id) { await db.collection("assinaturas").doc(id).delete(); },
-        calcularTotalMensal() { return this.assinaturas.reduce((a, b) => a + (parseFloat(b.valor) || 0), 0); },
-        formatarMoeda(v) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0); },
-        carregarDados() { this.carregando = true; setTimeout(() => { this.carregando = false; }, 300); }
-      }));
-    });
-  </script>
+    <!-- Botão Ação -->
+    <div class="sm:col-span-2 md:col-span-4 flex items-end">
+      <button type="submit" class="w-full bg-[#b8860b] hover:bg-[#d4af37] text-[#0f0d0a] font-bold py-2.5 px-4 text-xs rounded transition active:scale-95">
+        <span x-text="editandoId ? 'Atualizar Tributo' : '⚔️ Registrar Tributo'"></span>
+      </button>
+    </div>
+  </form>
+</section>
+
+<!-- LISTA DE ASSINATURAS -->
+<section class="bg-[#14100c] p-4 rounded-lg border border-[#2e2316] space-y-3">
+  <h2 class="text-sm text-[#d4af37] font-semibold flex items-center justify-between border-b border-[#2e2316] pb-1.5">
+    <span class="flex items-center gap-2">📋 Tributos Ativos</span>
+    <span class="text-[10px] bg-[#2e2316] text-[#a39274] px-2 py-0.5 rounded-full" x-text="assinaturas.length"></span>
+  </h2>
+
+  <div class="space-y-2 text-xs max-h-60 overflow-y-auto pr-1">
+    <template x-for="item in assinaturas" :key="item.id">
+      <div class="bg-[#1c1712] p-2.5 rounded border-l-2 border-[#b8860b] flex justify-between items-center gap-2 hover:border-[#b8860b]/40 transition">
+        <div class="space-y-1 overflow-hidden">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-sm text-[#e2d2b4] truncate" x-text="item.nome"></span>
+            <span class="text-[9px] bg-amber-900/40 text-amber-300 border border-amber-700/50 px-1.5 py-0.5 rounded font-bold whitespace-nowrap" x-text="'Dia ' + item.diaCobranca"></span>
+          </div>
+          <div class="text-[11px] text-[#a39274]">
+            <span>💳 <strong class="text-[#e2d2b4]" x-text="item.pagamento || 'Cartão de Crédito'"></strong></span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 shrink-0">
+          <div class="text-right">
+            <span class="text-[#d4af37] font-bold text-sm whitespace-nowrap" x-text="formatarMoeda(item.valor) + ' /mês'"></span>
+          </div>
+          <div class="flex items-center gap-1">
+            <button @click="prepararEdicao(item)" title="Editar" class="text-[#d4af37] hover:text-[#fff] px-1 font-bold text-xs">✎</button>
+            <button @click="excluirAssinatura(item.id)" title="Excluir" class="text-[#8b0000] hover:text-[#ff4500] px-1 font-bold text-xs">✕</button>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <template x-if="assinaturas.length === 0">
+      <p class="text-xs text-[#6e5d4f] italic py-2 text-center">Nenhum tributo permanente registrado. O reino está livre de taxas!</p>
+    </template>
+  </div>
+</section>
+
+</div>
+
+<!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO -->
+<div x-show="modalConfirmacaoAberto" x-cloak class="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+  <div class="bg-[#181410] border border-[#b8860b] p-5 rounded-lg max-w-sm w-full space-y-4 shadow-2xl">
+    <h3 class="font-title text-sm text-[#d4af37] border-b border-[#3a2e1e] pb-2" x-text="modalConfirmacaoTitulo"></h3>
+    <p class="text-[#e2d2b4] text-xs" x-text="modalConfirmacaoMensagem"></p>
+    <div class="flex justify-end gap-2 pt-2">
+      <button type="button" @click="fecharModalConfirmacao()"
+        class="bg-[#2e2316] hover:bg-[#3a2e1e] text-[#a39274] font-bold py-2 px-3 text-xs rounded transition">Cancelar</button>
+      <button type="button" @click="executarAcaoConfirmada()"
+        class="bg-[#8b0000] hover:bg-red-700 text-white font-bold py-2 px-3 text-xs rounded transition active:scale-95">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER STATUS -->
+<footer class="mt-6 text-center text-[9px] text-[#6e5d4f] border-t border-[#2e2316] pt-2">
+  <span>Os Tributos Permanentes • Projeto Erebor OS</span>
+</footer>
+
+<!-- SCRIPT FIREBASE COMPAT + ALPINE LOGIC -->
+<script>
+const firebaseConfig = {
+apiKey: "AIzaSyDU3mYKoWh8qE3wj6R5OKqhWwXMeefEl2g",
+authDomain: "erebor-os.firebaseapp.com",
+projectId: "erebor-os",
+storageBucket: "erebor-os.firebasestorage.app",
+messagingSenderId: "733641275906",
+appId: "1:733641275906:web:d83dedfee8bc056a7e851b"
+};
+
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+document.addEventListener("alpine:init", () => {
+  Alpine.data("assinaturasApp", () => ({
+    assinaturas: [],
+    nome: "",
+    valor: "",
+    diaCobranca: "",
+    pagamento: "Cartão de Crédito",
+    editandoId: null,
+    carregando: false,
+    mensagemErro: "",
+    modalConfirmacaoAberto: false,
+    modalConfirmacaoTitulo: "",
+    modalConfirmacaoMensagem: "",
+    modalConfirmacaoAcao: null,
+
+    init() {
+      this.escutarAssinaturas();
+    },
+
+    escutarAssinaturas() {
+      this.carregando = true;
+      db.collection("assinaturas").onSnapshot((snapshot) => {
+        this.assinaturas = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        this.carregando = false;
+      }, (err) => {
+        console.error("Erro ao carregar assinaturas:", err);
+        this.carregando = false;
+      });
+    },
+
+    calcularTotalMensal() {
+      return this.assinaturas.reduce((acc, assinatura) => acc + parseFloat(assinatura.valor || 0), 0);
+    },
+
+    async salvarAssinatura() {
+      if (!this.nome.trim() || !this.valor || !this.diaCobranca) return;
+      this.carregando = true;
+
+      const assinaturaData = {
+        nome: this.nome.trim(),
+        valor: parseFloat(this.valor),
+        diaCobranca: parseInt(this.diaCobranca),
+        pagamento: this.pagamento || "Cartão de Crédito",
+        criadoEm: this.editandoId ? (this.assinaturas.find(a => a.id === this.editandoId)?.criadoEm || new Date().toISOString()) : new Date().toISOString(),
+        atualizadoEm: new Date().toISOString(),
+        origemModulo: "assinaturas"
+      };
+
+      try {
+        if (this.editandoId) {
+          await db.collection("assinaturas").doc(this.editandoId).set(assinaturaData, { merge: true });
+        } else {
+          await db.collection("assinaturas").add(assinaturaData);
+        }
+        this.resetForm();
+      } catch (e) {
+        console.error("Erro ao salvar assinatura:", e);
+        this.mensagemErro = "Erro ao salvar assinatura.";
+        setTimeout(() => { this.mensagemErro = ""; }, 4000);
+      } finally {
+        this.carregando = false;
+      }
+    },
+
+    prepararEdicao(assinatura) {
+      this.editandoId = assinatura.id;
+      this.nome = assinatura.nome;
+      this.valor = assinatura.valor;
+      this.diaCobranca = assinatura.diaCobranca;
+      this.pagamento = assinatura.pagamento || "Cartão de Crédito";
+    },
+
+    cancelarEdicao() {
+      this.resetForm();
+    },
+
+    excluirAssinatura(id) {
+      this.modalConfirmacaoAcao = { id, acao: 'excluirAssinatura' };
+      this.modalConfirmacaoTitulo = 'Excluir Tributo / Assinatura';
+      this.modalConfirmacaoMensagem = 'Tem certeza que deseja excluir esta assinatura recorrente?';
+      this.modalConfirmacaoAberto = true;
+    },
+
+    fecharModalConfirmacao() {
+      this.modalConfirmacaoAberto = false;
+      this.modalConfirmacaoAcao = null;
+    },
+
+    async executarAcaoConfirmada() {
+      if (!this.modalConfirmacaoAcao) return;
+      
+      const { id, acao } = this.modalConfirmacaoAcao;
+      this.fecharModalConfirmacao();
+      
+      if (acao === 'excluirAssinatura') {
+        this.carregando = true;
+        try {
+          await db.collection("assinaturas").doc(id).delete();
+        } catch (e) {
+          console.error("Erro ao excluir assinatura:", e);
+          this.mensagemErro = "Erro ao excluir assinatura.";
+          setTimeout(() => { this.mensagemErro = ""; }, 4000);
+        } finally {
+          this.carregando = false;
+        }
+      }
+    },
+
+    resetForm() {
+      this.editandoId = null;
+      this.nome = "";
+      this.valor = "";
+      this.diaCobranca = "";
+      this.pagamento = "Cartão de Crédito";
+    },
+
+    carregarDados() {
+      this.carregando = true;
+      setTimeout(() => { this.carregando = false; }, 400);
+    },
+
+    formatarMoeda(valor) {
+      return parseFloat(valor || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+    }
+  }));
+});
+</script>
 </body>
 </html>
